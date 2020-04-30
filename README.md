@@ -1,2 +1,1 @@
-# IM-X
-### Golang分布式IM服务
+# IM-X Golang分布式IM服务
