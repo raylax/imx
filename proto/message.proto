@@ -43,6 +43,7 @@ message WsMessageRequest {
     MessageType type = 2;
     string data = 3;
     string sourceId = 4;
+    int32 ext = 5;
 }
 
 enum MessageType {
