@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "message.proto";
+package proto;
+
+
+service MessageService {
+
+    rpc route (proto.MessageRequest) returns (proto.MessageResponse) {
+    }
+
+}
+

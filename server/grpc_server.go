@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	pd "github.com/raylax/imx/message"
+	pb "github.com/raylax/imx/proto"
 	"github.com/raylax/imx/registry"
 	"google.golang.org/grpc"
 	"log"
@@ -10,17 +10,16 @@ import (
 )
 
 type grpcServer struct {
-
 }
 
-func (s *grpcServer) Route(ctx context.Context, req *pd.MessageRequest) (*pd.MessageResponse, error) {
+func (s *grpcServer) Route(ctx context.Context, req *pb.MessageRequest) (*pb.MessageResponse, error) {
 	log.Printf("Received: %v", req.Id)
-	return &pd.MessageResponse{Status: pd.MessageResponse_Ok}, nil
+	return &pb.MessageResponse{Status: pb.MessageResponse_Ok}, nil
 }
 
 type rpcServer struct {
-	addr string
-	listen net.Listener
+	addr     string
+	listen   net.Listener
 	registry registry.Registry
 }
 
@@ -30,7 +29,7 @@ func (s *rpcServer) Serve() error {
 		return err
 	}
 	server := grpc.NewServer()
-	pd.RegisterMessageServiceServer(server, &grpcServer{})
+	pb.RegisterMessageServiceServer(server, &grpcServer{})
 	s.listen = listen
 	return server.Serve(listen)
 }

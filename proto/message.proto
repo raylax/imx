@@ -1,13 +1,6 @@
 syntax = "proto3";
 
-package message;
-
-service MessageService {
-
-    rpc route (MessageRequest) returns (MessageResponse) {
-    }
-
-}
+package proto;
 
 message MessageRequest {
     repeated string id = 1;

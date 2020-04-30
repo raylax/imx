@@ -2,13 +2,13 @@ package client
 
 import (
 	"github.com/raylax/imx/core"
-	pd "github.com/raylax/imx/message"
+	pb "github.com/raylax/imx/proto"
 	"google.golang.org/grpc"
 )
 
 type rpcClient struct {
 	node core.Node
-	cli pd.MessageServiceClient
+	cli  pb.MessageServiceClient
 }
 
 func NewClient(node core.Node) *rpcClient {
@@ -20,10 +20,10 @@ func (c *rpcClient) Init() error {
 	if err != nil {
 		return err
 	}
-	c.cli = pd.NewMessageServiceClient(conn)
+	c.cli = pb.NewMessageServiceClient(conn)
 	return nil
 }
 
-func (c *rpcClient) MessageService() pd.MessageServiceClient {
+func (c *rpcClient) MessageService() pb.MessageServiceClient {
 	return c.cli
 }

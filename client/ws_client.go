@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
-	pd "github.com/raylax/imx/message"
+	pb "github.com/raylax/imx/proto"
 	"sync"
 )
 
@@ -21,8 +21,8 @@ var m = sync.RWMutex{}
 func AddWsClient(id string, conn *websocket.Conn, codecType CodecType) {
 	m.Lock()
 	wsClientMap[id] = &wsClient{
-		id:   id,
-		conn: conn,
+		id:        id,
+		conn:      conn,
 		codecType: codecType,
 	}
 	m.Unlock()
@@ -42,12 +42,12 @@ func LookupClient(id string) (*wsClient, bool) {
 }
 
 type wsClient struct {
-	id   string
-	conn *websocket.Conn
+	id        string
+	conn      *websocket.Conn
 	codecType CodecType
 }
 
-func (c *wsClient) Send(request *pd.WsMessageRequest) error {
+func (c *wsClient) Send(request *pb.WsMessageRequest) error {
 	var data []byte
 	var err error
 	var messageType int
@@ -64,4 +64,3 @@ func (c *wsClient) Send(request *pd.WsMessageRequest) error {
 	}
 	return c.conn.WriteMessage(messageType, data)
 }
-

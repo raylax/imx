@@ -8,15 +8,15 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/raylax/imx/client"
 	"github.com/raylax/imx/core"
-	pd "github.com/raylax/imx/message"
+	pb "github.com/raylax/imx/proto"
 	"github.com/raylax/imx/registry"
 	"log"
 	"net/http"
 )
 
 const (
-	maxMessageSize = 512
-	readBufferSize = 1024
+	maxMessageSize  = 512
+	readBufferSize  = 1024
 	writeBufferSize = 1024
 )
 
@@ -29,7 +29,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type wsServer struct {
-	addr string
+	addr     string
 	registry registry.Registry
 }
 
@@ -47,14 +47,15 @@ func (s *wsServer) serveWs(w http.ResponseWriter, r *http.Request) {
 	go s.handleConn(conn)
 }
 
-func (s *wsServer) handleConn(conn *websocket.Conn)  {
+func (s *wsServer) handleConn(conn *websocket.Conn) {
 	conn.SetReadLimit(maxMessageSize)
 	codecType, id, err := s.handleHandshake(conn)
 	if err != nil {
 		log.Printf("[%s]握手失败：%s", conn.RemoteAddr(), err)
+		_ = conn.Close()
 		return
 	}
-	user := core.User{Id:id}
+	user := core.User{Id: id}
 	err = s.registry.RegUser(user)
 	if err != nil {
 		log.Printf("注册用户失败：%s", err)
@@ -70,7 +71,7 @@ func (s *wsServer) handleConn(conn *websocket.Conn)  {
 			log.Printf("[%s]断开：%s", conn.RemoteAddr(), err)
 			return
 		}
-		message := &pd.WsMessageRequest{}
+		message := &pb.WsMessageRequest{}
 		switch t {
 		case websocket.TextMessage:
 			err = json.Unmarshal(data, message)
@@ -83,7 +84,7 @@ func (s *wsServer) handleConn(conn *websocket.Conn)  {
 
 }
 
-func (s *wsServer) sendMessage(message *pd.WsMessageRequest) error {
+func (s *wsServer) sendMessage(message *pb.WsMessageRequest) error {
 	cli, ok := client.LookupClient(message.TargetId)
 	if ok {
 		return cli.Send(message)
@@ -91,7 +92,7 @@ func (s *wsServer) sendMessage(message *pd.WsMessageRequest) error {
 	return s.sendMessageToRemoteNode(message)
 }
 
-func (s *wsServer) sendMessageToRemoteNode(message *pd.WsMessageRequest) error {
+func (s *wsServer) sendMessageToRemoteNode(message *pb.WsMessageRequest) error {
 	return nil
 }
 
@@ -101,7 +102,7 @@ func (s *wsServer) handleHandshake(conn *websocket.Conn) (client.CodecType, stri
 	if err != nil {
 		return code, "", err
 	}
-	message := &pd.WsHandshakeRequest{}
+	message := &pb.WsHandshakeRequest{}
 	switch t {
 	case websocket.TextMessage:
 		err = json.Unmarshal(data, message)
@@ -113,7 +114,7 @@ func (s *wsServer) handleHandshake(conn *websocket.Conn) (client.CodecType, stri
 	if err != nil {
 		return code, "", err
 	}
-	resp := &pd.WsResponse{Status: pd.WsResponse_Ok}
+	resp := &pb.WsResponse{Status: pb.WsResponse_Ok}
 	err = conn.WriteJSON(resp)
 	if err != nil {
 		return code, "", err
