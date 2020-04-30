@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const keySplitChar  = "_"
+const keySplitChar = "_"
 
 type Node struct {
 	Addr string

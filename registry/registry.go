@@ -3,7 +3,6 @@ package registry
 import "github.com/raylax/imx/core"
 
 type Registry interface {
-
 	Reg() error
 
 	UnReg()
@@ -13,5 +12,4 @@ type Registry interface {
 	UnRegUser(u core.User)
 
 	Lookup(u core.User) ([]core.Node, error)
-
 }

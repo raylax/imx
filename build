@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+REPO_PATH="github.com/raylax/imx"
+
+GIT_SHA=$(git rev-parse --short HEAD || echo "Unknown")
+BUILT_ON=$(date "+%Y-%m-%d_%T_%z")
+
+GO_LDFLAGS="$GO_LDFLAGS -w -s"
+GO_LDFLAGS="$GO_LDFLAGS -X ${REPO_PATH}/version.gitSHA=${GIT_SHA}"
+GO_LDFLAGS="$GO_LDFLAGS -X ${REPO_PATH}/version.builtOn=${BUILT_ON}"
+
+CMD="go build ${GO_BUILD_FLAGS} -ldflags "\"${GO_LDFLAGS}\"" -o bin/imx"
+eval "${CMD}"

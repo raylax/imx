@@ -162,7 +162,7 @@ func (r *EtcdRegistry) regNode() error {
 	return nil
 }
 
-func (r *EtcdRegistry) regUsers()  {
+func (r *EtcdRegistry) regUsers() {
 	r.m.RLock()
 	for _, u := range r.users {
 		_ = r.RegUser(u)

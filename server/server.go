@@ -14,14 +14,14 @@ type server struct {
 	rpcAddr   string
 	rpcServer *rpcServer
 	wsServer  *wsServer
-	registry registry.Registry
+	registry  registry.Registry
 }
 
 func NewServer(registry registry.Registry, wsAddr, rpcAddr string) *server {
 	return &server{
 		registry: registry,
-		wsAddr:  wsAddr,
-		rpcAddr: rpcAddr,
+		wsAddr:   wsAddr,
+		rpcAddr:  rpcAddr,
 	}
 }
 

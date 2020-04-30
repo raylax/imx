@@ -17,3 +17,6 @@
 # IDE
 .idea
 *.iml
+
+# build
+bin/imx
