@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package message;
+
+service MessageService {
+
+    rpc route (MessageRequest) returns (MessageResponse) {
+    }
+
+}
+
+message MessageRequest {
+    repeated string id = 1;
+    WsMessageRequest message = 2;
+    string source = 3;
+}
+
+message MessageResponse {
+    Status status = 1;
+    enum Status {
+        Ok = 0;
+        NotRouted = 1;
+    }
+}
+
+message WsResponse {
+    Status status = 1;
+    string message = 2;
+    enum Status {
+        NONE = 0;
+        Ok = 1;
+        Error = 2;
+    }
+}
+
+message WsHandshakeRequest {
+    string id = 1;
+    string secret = 2;
+}
+
+message WsMessageRequest {
+    string targetId = 1;
+    MessageType type = 2;
+    string data = 3;
+    string sourceId = 4;
+}
+
+enum MessageType {
+    NONE = 0;
+    P2P = 1;
+    GROUP = 2;
+    CTRL = 3;
+}
