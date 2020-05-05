@@ -110,6 +110,8 @@ func (s *wsServer) handleHandshake(conn *websocket.Conn) (client.CodecType, stri
 	case websocket.BinaryMessage:
 		err = proto.Unmarshal(data, message)
 		code = client.CodecTypeProtobuf
+	default:
+		return code, "", errors.New(fmt.Sprintf("Unsupported message type %d", t))
 	}
 	if err != nil {
 		return code, "", err

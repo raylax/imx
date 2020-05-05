@@ -2,6 +2,8 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
 	pb "github.com/raylax/imx/proto"
@@ -58,6 +60,8 @@ func (c *wsClient) Send(request *pb.WsMessageRequest) error {
 	case CodecTypeProtobuf:
 		data, err = proto.Marshal(request)
 		messageType = websocket.BinaryMessage
+	default:
+		return errors.New(fmt.Sprintf("Unsupported codec type %d", c.codecType))
 	}
 	if err != nil {
 		return err
