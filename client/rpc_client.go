@@ -11,7 +11,7 @@ type rpcClient struct {
 	cli  pb.MessageServiceClient
 }
 
-func NewClient(node core.Node) *rpcClient {
+func NewRpcClient(node core.Node) *rpcClient {
 	return &rpcClient{node: node}
 }
 
