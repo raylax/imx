@@ -31,6 +31,7 @@ func init() {
 }
 
 func main() {
+
 	flag.Parse()
 	if h {
 		flag.Usage()
