@@ -3,25 +3,29 @@ package server
 import (
 	"github.com/raylax/imx/registry"
 	"log"
+	"os"
 )
 
 type Server interface {
 	Serve() error
+	Shutdown()
 }
 
 type server struct {
-	wsAddr    string
-	rpcAddr   string
-	rpcServer *rpcServer
-	wsServer  *wsServer
-	registry  registry.Registry
+	wsAddr     string
+	rpcAddr    string
+	rpcServer  *rpcServer
+	wsServer   *wsServer
+	registry   registry.Registry
+	shutdownCh chan os.Signal
 }
 
-func NewServer(registry registry.Registry, wsAddr, rpcAddr string) *server {
+func NewServer(registry registry.Registry, wsAddr, rpcAddr string, shutdownCh chan os.Signal) *server {
 	return &server{
-		registry: registry,
-		wsAddr:   wsAddr,
-		rpcAddr:  rpcAddr,
+		registry:   registry,
+		wsAddr:     wsAddr,
+		rpcAddr:    rpcAddr,
+		shutdownCh: shutdownCh,
 	}
 }
 
@@ -40,7 +44,13 @@ func (s *server) Serve() error {
 	if err := s.registry.Reg(); err != nil {
 		return err
 	}
-	err := <-errChain
+	var err error
+	select {
+	case err = <-errChain:
+	case <-s.shutdownCh:
+		s.registry.UnReg()
+		return nil
+	}
 	s.registry.UnReg()
 	return err
 }

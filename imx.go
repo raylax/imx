@@ -8,6 +8,7 @@ import (
 	"github.com/raylax/imx/version"
 	"log"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 )
@@ -45,7 +46,9 @@ func main() {
 	if err := reg.Init(); err != nil {
 		log.Fatal(err)
 	}
-	s := server.NewServer(reg, wsListen, rpcListen)
+	shutdownCh := make(chan os.Signal, 1)
+	signal.Notify(shutdownCh, os.Interrupt, os.Kill)
+	s := server.NewServer(reg, wsListen, rpcListen, shutdownCh)
 	err := s.Serve()
 	if err != nil {
 		log.Fatal(err)
