@@ -14,6 +14,7 @@ func init() {
 	r = rand.New(rand.NewSource(time.Now().Unix()))
 }
 
+// 随机小写字母
 func Letter(len int) string {
 	println(c, s)
 	data := make([]byte, len)

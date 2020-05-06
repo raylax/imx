@@ -15,6 +15,7 @@ type grpcServer struct {
 func (s *grpcServer) Route(ctx context.Context, req *pb.MessageRequest) (*pb.MessageResponse, error) {
 	for _, id := range req.TargetIds {
 		wsClient, ok := client.LookupClient(id)
+		// 如果客户端不在线直接跳过
 		if !ok {
 			continue
 		}

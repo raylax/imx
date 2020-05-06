@@ -144,6 +144,7 @@ func (r *EtcdRegistry) LookupNodes(uid string) ([]core.Node, error) {
 	return nodes, nil
 }
 
+// 注册服务
 func (r *EtcdRegistry) reg() error {
 	log.Printf("注册服务")
 	err := r.reGrant()
@@ -160,6 +161,7 @@ func (r *EtcdRegistry) reg() error {
 	return nil
 }
 
+// 重新注册服务
 func (r *EtcdRegistry) reReg() error {
 	log.Printf("重新注册服务")
 	r.ctx, r.cancel = context.WithCancel(context.Background())
@@ -172,6 +174,7 @@ func (r *EtcdRegistry) reReg() error {
 	return nil
 }
 
+// 重新创建租约
 func (r *EtcdRegistry) reGrant() error {
 	log.Printf("创建租约")
 	lease, err := r.lease.Grant(r.ctx, keepAlive)
@@ -183,6 +186,7 @@ func (r *EtcdRegistry) reGrant() error {
 	return nil
 }
 
+// 重新注册节点
 func (r *EtcdRegistry) regNode() error {
 	log.Printf("注册节点")
 	val, err := json.Marshal(r.node)
@@ -197,6 +201,7 @@ func (r *EtcdRegistry) regNode() error {
 	return nil
 }
 
+// 重新注册用户
 func (r *EtcdRegistry) regUsers() {
 	r.userMux.RLock()
 	for _, u := range r.users {
@@ -211,12 +216,14 @@ func (r *EtcdRegistry) keepAlive() error {
 	if err != nil {
 		return err
 	}
+	// 监控租约到期
 	go func() {
 		for {
 			select {
 			case resp := <-respChan:
 				if resp == nil {
 					log.Printf("租约到期")
+					// 租约到期重新注册
 					_ = r.reReg()
 					return
 				}
@@ -234,13 +241,16 @@ func (r *EtcdRegistry) handleNodeChange(e *clientv3.Event) {
 		return
 	}
 	switch e.Type {
+	// 监控到节点添加，添加RPC客户端
 	case mvccpb.PUT:
 		client.AddRpcClient(node)
+	// 监控到节点删除，移除RPC客户端
 	case mvccpb.DELETE:
 		client.RemoveRpcClient(node)
 	}
 }
 
+// 监控节点变化
 func (r *EtcdRegistry) watchNodes() {
 	watchChan := r.cli.Watch(r.ctx, nodePrefix, clientv3.WithPrefix(), clientv3.WithIgnoreValue())
 	go func() {
