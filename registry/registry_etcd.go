@@ -18,6 +18,7 @@ const (
 	keyPrefix   = "/imx"
 	nodePrefix  = keyPrefix + "/node/"
 	userPrefix  = keyPrefix + "/user/"
+	groupPrefix = keyPrefix + "/group/"
 )
 
 type EtcdRegistry struct {
@@ -31,7 +32,9 @@ type EtcdRegistry struct {
 	cancel    context.CancelFunc
 	key       string
 	users     map[string]core.User
-	m         sync.RWMutex
+	groups    map[string]core.Group
+	userMux   sync.RWMutex
+	groupMux  sync.RWMutex
 }
 
 func NewEtcdRegistry(endpoints []string, node core.Node) *EtcdRegistry {
@@ -77,21 +80,60 @@ func (r *EtcdRegistry) RegUser(u core.User) error {
 	if err != nil {
 		return err
 	}
-	r.m.Lock()
+	r.userMux.Lock()
 	r.users[u.Id] = u
-	r.m.Unlock()
+	r.userMux.Unlock()
 	return nil
 }
 
 func (r *EtcdRegistry) UnRegUser(u core.User) {
-	r.m.Lock()
+	r.userMux.Lock()
 	r.users[u.Id] = u
-	r.m.Unlock()
+	r.userMux.Unlock()
 	_, _ = r.kv.Delete(r.ctx, userPrefix+u.Id)
 }
 
-func (r *EtcdRegistry) LookupNode(id string) ([]core.Node, error) {
-	resp, err := r.kv.Get(r.ctx, userPrefix+id, clientv3.WithPrefix())
+func (r *EtcdRegistry) RegGroup(g core.Group, u core.User) error {
+	_, err := r.kv.Put(r.ctx, groupPrefix+g.Id+"/"+u.Id, "", clientv3.WithLease(r.leaseId))
+	if err != nil {
+		return err
+	}
+	r.groupMux.Lock()
+	r.groups[g.Id+"/"+u.Id] = core.Group{Users: []core.User{u}}
+	r.groupMux.Unlock()
+	return nil
+}
+
+func (r *EtcdRegistry) UnRegGroup(g core.Group, u core.User) {
+	_, _ = r.kv.Delete(r.ctx, groupPrefix+g.Id+"/"+u.Id)
+	r.groupMux.Lock()
+	delete(r.groups, g.Id+"/"+u.Id)
+	r.groupMux.Unlock()
+}
+
+func (r *EtcdRegistry) reRegGroups() {
+	r.groupMux.RLock()
+	for _, g := range r.groups {
+		_ = r.RegGroup(g, g.Users[0])
+	}
+	r.groupMux.RUnlock()
+}
+
+func (r *EtcdRegistry) GetGroupUsers(gid string) ([]string, error) {
+	resp, err := r.kv.Get(r.ctx, groupPrefix+gid+"/", clientv3.WithPrefix(), clientv3.WithKeysOnly())
+	if err != nil {
+		return nil, err
+	}
+	prefixLen := len(groupPrefix + gid + "/")
+	users := make([]string, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		users[i] = string(kv.Key)[prefixLen:]
+	}
+	return users, nil
+}
+
+func (r *EtcdRegistry) LookupNodes(uid string) ([]core.Node, error) {
+	resp, err := r.kv.Get(r.ctx, userPrefix+uid, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +167,7 @@ func (r *EtcdRegistry) reReg() error {
 		return err
 	}
 	r.regUsers()
+	r.reRegGroups()
 	log.Printf("服务重新注册完成")
 	return nil
 }
@@ -155,11 +198,11 @@ func (r *EtcdRegistry) regNode() error {
 }
 
 func (r *EtcdRegistry) regUsers() {
-	r.m.RLock()
+	r.userMux.RLock()
 	for _, u := range r.users {
 		_ = r.RegUser(u)
 	}
-	r.m.RUnlock()
+	r.userMux.RUnlock()
 }
 
 func (r *EtcdRegistry) keepAlive() error {

@@ -11,5 +11,11 @@ type Registry interface {
 
 	UnRegUser(u core.User)
 
-	LookupNode(id string) ([]core.Node, error)
+	RegGroup(g core.Group, u core.User) error
+
+	UnRegGroup(g core.Group, u core.User)
+
+	GetGroupUsers(gid string) ([]string, error)
+
+	LookupNodes(uid string) ([]core.Node, error)
 }

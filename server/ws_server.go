@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/raylax/imx/client"
@@ -13,9 +15,9 @@ import (
 )
 
 const (
-	maxMessageSize  = 512
-	readBufferSize  = 1024
-	writeBufferSize = 1024
+	maxMessageSize  = 512  // 512kb
+	readBufferSize  = 1024 // 1m
+	writeBufferSize = 1024 // 1m
 )
 
 var upgrader = websocket.Upgrader{
@@ -87,19 +89,54 @@ func (s *wsServer) handleConn(conn *websocket.Conn) {
 }
 
 func (s *wsServer) sendMessage(message *pb.WsMessageRequest) error {
-	// 如果在当前服务找到接收者客户端则直接发送
-	if cli, found := client.LookupClient(message.TargetId); found {
-		return cli.Send(message)
+	switch message.Type {
+	case pb.MessageType_P2P:
+		return s.sendP2PMessage(message)
+	case pb.MessageType_GROUP:
+		return s.sendGroupMessage(message)
+	default:
+		return errors.New(fmt.Sprintf("unsupported message type `%s`", message.Type))
 	}
-	// 发送信息到远程节点
+}
+
+func (s *wsServer) sendGroupMessage(message *pb.WsMessageRequest) error {
+	users, err := s.registry.GetGroupUsers(message.GetTargetId())
+	if err != nil {
+		return err
+	}
+
+	remoteIds := make([]string, 0, len(users))
+	for _, u := range users {
+		// 过滤掉本地节点
+		if sent, _ := s.sendMessageToLocalNode(message, u); sent {
+			continue
+		}
+		remoteIds = append(remoteIds, u)
+	}
+	return s.sendMessageToRemoteNode(message, remoteIds)
+}
+
+func (s *wsServer) sendP2PMessage(message *pb.WsMessageRequest) error {
+	localed, err := s.sendMessageToLocalNode(message, message.TargetId)
+	if err != nil || localed {
+		return err
+	}
 	return s.sendMessageToRemoteNode(message, []string{message.TargetId})
 }
 
+func (s *wsServer) sendMessageToLocalNode(message *pb.WsMessageRequest, targetId string) (bool, error) {
+	if cli, found := client.LookupClient(targetId); found {
+		return true, cli.Send(message)
+	}
+	return false, nil
+}
+
+// 如果多客户端在同一节点，则合并发送
 func (s *wsServer) sendMessageToRemoteNode(message *pb.WsMessageRequest, targetIds []string) error {
 	var targetMap = make(map[string][]string)
 	var nodeMap = make(map[string]core.Node)
 	for _, target := range targetIds {
-		nodes, err := s.registry.LookupNode(target)
+		nodes, err := s.registry.LookupNodes(target)
 		if err != nil {
 			continue
 		}

@@ -43,5 +43,4 @@ enum MessageType {
     NONE = 0;
     P2P = 1;
     GROUP = 2;
-    CTRL = 3;
 }
