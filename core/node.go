@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,15 +10,15 @@ import (
 const keySplitChar = "_"
 
 type Node struct {
-	Addr string
-	Port int
+	Addr string `json:"addr"`
+	Port int    `json:"port"`
 }
 
 func (n *Node) Key() string {
 	return fmt.Sprintf("%s%s%d", n.Addr, keySplitChar, n.Port)
 }
 
-func (n *Node) Address() string {
+func (n *Node) Endpoint() string {
 	return fmt.Sprintf("%s:%d", n.Addr, n.Port)
 }
 
@@ -28,4 +29,10 @@ func NewNodeFromKey(key string) Node {
 		Addr: ss[0],
 		Port: port,
 	}
+}
+
+func NewNodeFromJSON(data []byte) Node {
+	node := Node{}
+	_ = json.Unmarshal(data, node)
+	return node
 }

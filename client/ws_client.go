@@ -8,24 +8,24 @@ import (
 type CodecType int32
 
 var wsClientMap = make(map[string]*WsClient)
-var m = sync.RWMutex{}
+var wsMux = sync.RWMutex{}
 
 func AddWsClient(cli *WsClient) {
-	m.Lock()
+	wsMux.Lock()
 	wsClientMap[cli.Id()] = cli
-	m.Unlock()
+	wsMux.Unlock()
 }
 
 func RemoveWsClient(cli *WsClient) {
-	m.Lock()
+	wsMux.Lock()
 	delete(wsClientMap, cli.Id())
-	m.Unlock()
+	wsMux.Unlock()
 }
 
 func LookupClient(id string) (*WsClient, bool) {
-	m.RLock()
+	wsMux.RLock()
 	client, ok := wsClientMap[id]
-	m.RUnlock()
+	wsMux.RUnlock()
 	return client, ok
 }
 

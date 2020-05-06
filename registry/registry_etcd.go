@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/patrickmn/go-cache"
+	"github.com/raylax/imx/client"
 	"github.com/raylax/imx/core"
 	"go.etcd.io/etcd/clientv3"
 	"log"
@@ -193,12 +194,16 @@ func (r *EtcdRegistry) keepAlive() error {
 }
 
 func (r *EtcdRegistry) handleNodeChange(e *clientv3.Event) {
-	log.Printf("watchNodes => " + e.Type.String() + " , " + string(e.Kv.Key) + " , " + string(e.Kv.Value))
+	node := core.NewNodeFromJSON(e.Kv.Value)
+	// 排除自身节点
+	if node.Endpoint() == r.node.Endpoint() {
+		return
+	}
 	switch e.Type {
 	case mvccpb.PUT:
-
+		client.AddRpcClient(node)
 	case mvccpb.DELETE:
-
+		client.RemoveRpcClient(node)
 	}
 }
 
