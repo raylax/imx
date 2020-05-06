@@ -3,9 +3,8 @@ syntax = "proto3";
 package proto;
 
 message MessageRequest {
-    repeated string id = 1;
+    repeated string targetIds = 1;
     WsMessageRequest message = 2;
-    string source = 3;
 }
 
 message MessageResponse {
@@ -32,11 +31,12 @@ message WsHandshakeRequest {
 }
 
 message WsMessageRequest {
-    string targetId = 1;
-    MessageType type = 2;
-    string data = 3;
-    string sourceId = 4;
-    int32 ext = 5;
+    string messageId = 1;
+    string targetId = 2;
+    MessageType type = 3;
+    string data = 4;
+    string sourceId = 5;
+    int32 ext = 6;
 }
 
 enum MessageType {

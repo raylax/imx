@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/patrickmn/go-cache"
 	"github.com/raylax/imx/client"
 	"github.com/raylax/imx/core"
 	"go.etcd.io/etcd/clientv3"
@@ -14,13 +13,11 @@ import (
 )
 
 const (
-	dialTimeout          = 5 * time.Second
-	keepAlive            = 5
-	keyPrefix            = "/imx"
-	nodePrefix           = keyPrefix + "/node/"
-	userPrefix           = keyPrefix + "/user/"
-	cacheExpiration      = 1 * time.Minute
-	cacheCleanupInterval = 30 * time.Second
+	dialTimeout = 5 * time.Second
+	keepAlive   = 5
+	keyPrefix   = "/imx"
+	nodePrefix  = keyPrefix + "/node/"
+	userPrefix  = keyPrefix + "/user/"
 )
 
 type EtcdRegistry struct {
@@ -33,7 +30,6 @@ type EtcdRegistry struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	key       string
-	cache     *cache.Cache
 	users     map[string]core.User
 	m         sync.RWMutex
 }
@@ -58,7 +54,6 @@ func (r *EtcdRegistry) Init() error {
 	r.cli = cli
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 	r.key = nodePrefix + r.node.Key()
-	r.cache = cache.New(cacheExpiration, cacheCleanupInterval)
 	r.users = make(map[string]core.User)
 	return nil
 }
@@ -77,7 +72,8 @@ func (r *EtcdRegistry) UnReg() {
 }
 
 func (r *EtcdRegistry) RegUser(u core.User) error {
-	_, err := r.kv.Put(r.ctx, userPrefix+u.Id, r.node.Key(), clientv3.WithLease(r.leaseId))
+	data, _ := json.Marshal(r.node)
+	_, err := r.kv.Put(r.ctx, userPrefix+u.Id, string(data), clientv3.WithLease(r.leaseId))
 	if err != nil {
 		return err
 	}
@@ -94,20 +90,15 @@ func (r *EtcdRegistry) UnRegUser(u core.User) {
 	_, _ = r.kv.Delete(r.ctx, userPrefix+u.Id)
 }
 
-func (r *EtcdRegistry) Lookup(u core.User) ([]core.Node, error) {
-	v, ok := r.cache.Get(u.Id)
-	if ok {
-		return v.([]core.Node), nil
-	}
-	resp, err := r.kv.Get(r.ctx, userPrefix+u.Id, clientv3.WithPrefix())
+func (r *EtcdRegistry) LookupNode(id string) ([]core.Node, error) {
+	resp, err := r.kv.Get(r.ctx, userPrefix+id, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
-	nodes := make([]core.Node, len(resp.Kvs))
+	nodes := make([]core.Node, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		nodes = append(nodes, core.NewNodeFromKey(string(kv.Value)))
+		nodes = append(nodes, core.NewNodeFromJSON(kv.Value))
 	}
-	r.cache.SetDefault(u.Id, nodes)
 	return nodes, nil
 }
 

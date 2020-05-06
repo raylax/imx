@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
+	"github.com/raylax/imx/client"
 	pb "github.com/raylax/imx/proto"
 	"github.com/raylax/imx/registry"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 )
 
@@ -13,7 +13,13 @@ type grpcServer struct {
 }
 
 func (s *grpcServer) Route(ctx context.Context, req *pb.MessageRequest) (*pb.MessageResponse, error) {
-	log.Printf("Received: %v", req.Id)
+	for _, id := range req.TargetIds {
+		wsClient, ok := client.LookupClient(id)
+		if !ok {
+			continue
+		}
+		_ = wsClient.Send(req.Message)
+	}
 	return &pb.MessageResponse{Status: pb.MessageResponse_Ok}, nil
 }
 

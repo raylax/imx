@@ -35,8 +35,6 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/google/uuid
 # github.com/gorilla/websocket v1.4.2
 github.com/gorilla/websocket
-# github.com/patrickmn/go-cache v2.1.0+incompatible
-github.com/patrickmn/go-cache
 # go.etcd.io/etcd v3.3.20+incompatible
 go.etcd.io/etcd/clientv3
 # go.uber.org/atomic v1.6.0

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/raylax/imx/client"
 	"github.com/raylax/imx/core"
@@ -68,7 +70,18 @@ func (s *wsServer) handleConn(conn *websocket.Conn) {
 			return
 		}
 		message.SourceId = wsCli.Id()
-		err = s.sendMessage(message)
+		message.MessageId = uuid.New().String()
+		go func() {
+			err = s.sendMessage(message)
+			if err != nil {
+				log.Printf("Failed to route message from [%s] to [%s], error: %s", message.SourceId, message.TargetId, err)
+			}
+		}()
+		resp := pb.WsResponse{
+			Status:  pb.WsResponse_Ok,
+			Message: message.MessageId,
+		}
+		_ = wsCli.Send(resp)
 	}
 
 }
@@ -79,10 +92,39 @@ func (s *wsServer) sendMessage(message *pb.WsMessageRequest) error {
 		return cli.Send(message)
 	}
 	// 发送信息到远程节点
-	return s.sendMessageToRemoteNode(message)
+	return s.sendMessageToRemoteNode(message, []string{message.TargetId})
 }
 
-func (s *wsServer) sendMessageToRemoteNode(message *pb.WsMessageRequest) error {
+func (s *wsServer) sendMessageToRemoteNode(message *pb.WsMessageRequest, targetIds []string) error {
+	var targetMap = make(map[string][]string)
+	var nodeMap = make(map[string]core.Node)
+	for _, target := range targetIds {
+		nodes, err := s.registry.LookupNode(target)
+		if err != nil {
+			continue
+		}
+		for _, n := range nodes {
+			targets, ok := targetMap[n.Endpoint()]
+			if !ok {
+				targets = make([]string, 0, len(targetIds)*3)
+			}
+			targetMap[n.Endpoint()] = append(targets, target)
+			_, ok = nodeMap[n.Endpoint()]
+			if !ok {
+				nodeMap[n.Endpoint()] = n
+			}
+		}
+	}
+	for endpoint, targetIds := range targetMap {
+		rpcClient := client.GetRpcClient(nodeMap[endpoint])
+		service := rpcClient.MessageService()
+		go func() {
+			_, err := service.Route(context.Background(), &pb.MessageRequest{TargetIds: targetIds, Message: message})
+			if err != nil {
+				log.Printf("failed to route message, error:%s", err)
+			}
+		}()
+	}
 	return nil
 }
 

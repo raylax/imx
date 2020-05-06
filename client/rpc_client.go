@@ -7,20 +7,20 @@ import (
 	"sync"
 )
 
-var rpcClientMap = make(map[string]*rpcClient)
+var rpcClientMap = make(map[string]*RpcClient)
 var rpcMux = sync.RWMutex{}
 
-type rpcClient struct {
+type RpcClient struct {
 	node core.Node
 	cli  pb.MessageServiceClient
 }
 
-func newRpcClient(node core.Node) *rpcClient {
-	return &rpcClient{node: node}
+func newRpcClient(node core.Node) *RpcClient {
+	return &RpcClient{node: node}
 }
 
-func (c *rpcClient) init() error {
-	conn, err := grpc.Dial(c.node.Endpoint())
+func (c *RpcClient) init() error {
+	conn, err := grpc.Dial(c.node.Endpoint(), grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
@@ -28,11 +28,11 @@ func (c *rpcClient) init() error {
 	return nil
 }
 
-func (c *rpcClient) MessageService() pb.MessageServiceClient {
+func (c *RpcClient) MessageService() pb.MessageServiceClient {
 	return c.cli
 }
 
-func AddRpcClient(node core.Node) *rpcClient {
+func AddRpcClient(node core.Node) *RpcClient {
 	client := newRpcClient(node)
 	err := client.init()
 	if err != nil {
@@ -50,7 +50,7 @@ func RemoveRpcClient(node core.Node) {
 	rpcMux.Unlock()
 }
 
-func GetRpcClient(node core.Node) *rpcClient {
+func GetRpcClient(node core.Node) *RpcClient {
 	rpcMux.RLock()
 	rpcCli, ok := rpcClientMap[node.Endpoint()]
 	rpcMux.RUnlock()

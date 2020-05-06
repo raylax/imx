@@ -11,5 +11,5 @@ type Registry interface {
 
 	UnRegUser(u core.User)
 
-	Lookup(u core.User) ([]core.Node, error)
+	LookupNode(id string) ([]core.Node, error)
 }

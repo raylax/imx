@@ -33,6 +33,6 @@ func NewNodeFromKey(key string) Node {
 
 func NewNodeFromJSON(data []byte) Node {
 	node := Node{}
-	_ = json.Unmarshal(data, node)
+	_ = json.Unmarshal(data, &node)
 	return node
 }
