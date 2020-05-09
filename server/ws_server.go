@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -102,7 +101,7 @@ func (s *wsServer) sendMessage(message *pb.WsMessageRequest) error {
 	case pb.MessageType_GROUP:
 		return s.sendGroupMessage(message)
 	default:
-		return errors.New(fmt.Sprintf("unsupported message type `%s`", message.Type))
+		return fmt.Errorf("unsupported message type `%s`", message.Type)
 	}
 }
 
