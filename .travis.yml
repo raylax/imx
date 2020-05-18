@@ -2,11 +2,15 @@ language: go
 
 go_import_path: github.com/raylax/imx
 
+go:
+  - 1.14.3
+
 script:
   - |
-    GOOS=darwin make
-    GOOS=windows make
-    GOARCH=arm make
-    GOARCH=arm64 make
-    GOARCH=ppc64le make
-    GOARCH=s390x make
+    make all
+    GOOS=darwin make build
+    GOOS=windows make build
+    GOARCH=arm make build
+    GOARCH=arm64 make build
+    GOARCH=ppc64le make build
+    GOARCH=s390x make build
