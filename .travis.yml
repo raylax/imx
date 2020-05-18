@@ -1,5 +1,8 @@
 language: go
 
+os: linux
+dist: xenial
+
 go_import_path: github.com/raylax/imx
 
 go:
