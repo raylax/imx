@@ -2,6 +2,8 @@ language: go
 
 os: linux
 dist: xenial
+services:
+  - docker
 
 go_import_path: github.com/raylax/imx
 
@@ -11,8 +13,10 @@ go:
 script:
   - |
     make all
+    make docker
     GOOS=darwin make build
     GOOS=windows make build
+    GOOS=linux make build
     GOARCH=arm make build
     GOARCH=arm64 make build
     GOARCH=ppc64le make build

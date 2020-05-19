@@ -3,6 +3,12 @@
 
 all: build exec clean
 
+
+docker:
+	@GOOS=linux GOARCH=amd64 ./build
+	docker build -t raylax/imx:0.0.1 .
+	@rm ./bin/imx
+
 build:
 	@GO_BUILD_FLAGS="-v" ./build
 

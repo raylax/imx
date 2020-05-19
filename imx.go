@@ -31,7 +31,6 @@ func init() {
 }
 
 func main() {
-
 	flag.Parse()
 	if h {
 		flag.Usage()
@@ -41,6 +40,13 @@ func main() {
 		println("IM-X\n" + version.String())
 		os.Exit(0)
 	}
+
+	// log
+	log.Printf("    registry: %s", registryAddress)
+	log.Printf("  rpc-listen: %s", rpcListen)
+	log.Printf("rpc-endpoint: %s", rpcEndpoint)
+	log.Printf("   ws-listen: %s", wsListen)
+
 	ss := strings.Split(rpcEndpoint, ":")
 	port, _ := strconv.Atoi(ss[1])
 	reg := registry.NewEtcdRegistry(strings.Split(registryAddress, ","), core.Node{Addr: ss[0], Port: port})
