@@ -7,7 +7,7 @@ ENV REGISTRY 127.0.0.1:2379
 
 WORKDIR /
 
-EXPOSE 8080 9321
+EXPOSE 8080 8081 9321
 
 # see https://github.com/golang/go/commit/9dee7771f561cf6aee081c0af6658cc81fac3918
 RUN echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf

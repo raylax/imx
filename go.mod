@@ -10,8 +10,9 @@ require (
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/envoyproxy/go-control-plane v0.7.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.1.0 // indirect
+	github.com/gin-gonic/gin v1.6.3
 	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golang/protobuf v1.3.0
+	github.com/golang/protobuf v1.3.3
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.2
@@ -21,6 +22,7 @@ require (
 	go.uber.org/zap v1.15.0 // indirect
 	golang.org/x/exp v0.0.0-20190121172915-509febef88a4 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
+	google.golang.org/genproto v0.0.0-20180831171423-11092d34479b // indirect
 	google.golang.org/grpc v1.23.1
 )
 

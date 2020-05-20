@@ -17,6 +17,7 @@ var registryAddress string
 var rpcListen string
 var rpcEndpoint string
 var wsListen string
+var apiListen string
 
 var h bool
 var v bool
@@ -26,6 +27,7 @@ func init() {
 	flag.StringVar(&rpcListen, "rpc-listen", ":9321", "RPC service listen address")
 	flag.StringVar(&rpcEndpoint, "rpc-endpoint", "127.0.0.1:9321", "RPC service endpoint address")
 	flag.StringVar(&wsListen, "ws-listen", ":8080", "Websocket service listen address")
+	flag.StringVar(&apiListen, "api-listen", ":8081", "API service listen address")
 	flag.BoolVar(&h, "h", false, "print help")
 	flag.BoolVar(&v, "v", false, "print version")
 }
@@ -46,6 +48,7 @@ func main() {
 	log.Printf("  rpc-listen: %s", rpcListen)
 	log.Printf("rpc-endpoint: %s", rpcEndpoint)
 	log.Printf("   ws-listen: %s", wsListen)
+	log.Printf("  api-listen: %s", apiListen)
 
 	ss := strings.Split(rpcEndpoint, ":")
 	port, _ := strconv.Atoi(ss[1])
@@ -55,7 +58,7 @@ func main() {
 	}
 	shutdownCh := make(chan os.Signal, 1)
 	signal.Notify(shutdownCh, os.Interrupt, os.Kill)
-	s := server.NewServer(reg, wsListen, rpcListen, shutdownCh)
+	s := server.NewServer(reg, wsListen, rpcListen, apiListen, shutdownCh)
 	err := s.Serve()
 	if err != nil {
 		log.Fatal(err)
